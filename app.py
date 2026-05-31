@@ -3,20 +3,22 @@ import numpy as np
 import joblib
 from tensorflow.keras.models import load_model
 
+# Page Config
 st.set_page_config(
     page_title="House Price Prediction",
-    page_icon="🏠",
-    layout="centered"
+    page_icon="🏠"
 )
 
 st.title("🏠 House Price Prediction")
 
-# Load model and scaler
+# Load files
 try:
     model = load_model("model.ann.h5")
     scaler = joblib.load("scaler.pkl")
+    le = joblib.load("label_encoder.pkl")
+
 except Exception as e:
-    st.error(f"Error loading model or scaler: {e}")
+    st.error(f"Error loading files: {e}")
     st.stop()
 
 # User Inputs
@@ -27,24 +29,32 @@ total_rooms = st.number_input("Total Rooms", value=880.0)
 population = st.number_input("Population", value=322.0)
 households = st.number_input("Households", value=126.0)
 median_income = st.number_input("Median Income", value=8.3252)
-ocean_proximity = st.number_input("Ocean Proximity (Encoded Value)", value=3.0)
 
-# Prediction
+# Ocean Proximity Dropdown
+ocean_proximity = st.selectbox(
+    "Ocean Proximity",
+    le.classes_
+)
+
+# Encode Category
+ocean_encoded = le.transform([ocean_proximity])[0]
+
+# Prediction Button
 if st.button("Predict House Price"):
 
-    try:
-        features = np.array([[
-            longitude,
-            latitude,
-            housing_median_age,
-            total_rooms,
-            population,
-            households,
-            median_income,
-            ocean_proximity
-        ]])
+    features = np.array([[
+        longitude,
+        latitude,
+        housing_median_age,
+        total_rooms,
+        population,
+        households,
+        median_income,
+        ocean_encoded
+    ]])
 
-        # Scale features
+    try:
+        # Scale Input
         features_scaled = scaler.transform(features)
 
         # Predict
